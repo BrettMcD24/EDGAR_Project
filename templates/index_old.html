@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinLens — SEC Financial Data Platform</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Satoshi:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="nav-logo" href="#">
+        <div class="nav-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="1" y="1" width="9" height="9" rx="2" fill="currentColor"/>
+            <rect x="12" y="1" width="9" height="9" rx="2" fill="currentColor" opacity=".5"/>
+            <rect x="1" y="12" width="9" height="9" rx="2" fill="currentColor" opacity=".5"/>
+            <rect x="12" y="12" width="9" height="9" rx="2" fill="currentColor"/>
+          </svg>
+        </div>
+        FinLens
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#search-section">Search</a>
+        <a href="#coming-soon">Roadmap</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-ghost">Sign In</button>
+        <button class="btn-primary-sm">Get Started Free</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── HERO ─────────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-bg-blobs">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+    </div>
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          Live SEC EDGAR Data · No Subscription Required
+        </div>
+        <h1>Institutional-grade<br><em>financial data</em><br>for everyone</h1>
+        <p class="hero-sub">Search any U.S. public company and instantly access Income Statements, Balance Sheets, Cash Flows and Financial Ratios — pulled directly from SEC EDGAR.</p>
+        <div class="hero-cta">
+          <div class="hero-search-wrap">
+            <input id="heroTickerInput" type="text" placeholder="Try AAPL, MSFT, NVDA..." autocomplete="off" spellcheck="false">
+            <button onclick="heroSearch()" class="btn-primary">Search Now →</button>
+          </div>
+          <div class="hero-chips">
+            <span class="hchip" onclick="quickLoad('AAPL')">AAPL</span>
+            <span class="hchip" onclick="quickLoad('MSFT')">MSFT</span>
+            <span class="hchip" onclick="quickLoad('NVDA')">NVDA</span>
+            <span class="hchip" onclick="quickLoad('TSLA')">TSLA</span>
+            <span class="hchip" onclick="quickLoad('AMZN')">AMZN</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="graphic-card card-main">
+          <div class="gcard-header">
+            <div class="gcard-ticker">AAPL</div>
+            <div class="gcard-name">Apple Inc.</div>
+          </div>
+          <div class="gcard-rows">
+            <div class="gcard-row"><span>Revenue</span><span class="gval pos">$391B</span></div>
+            <div class="gcard-row"><span>Net Income</span><span class="gval pos">$93.7B</span></div>
+            <div class="gcard-row"><span>Gross Margin</span><span class="gval pos">46.2%</span></div>
+            <div class="gcard-row"><span>Current Ratio</span><span class="gval">1.04x</span></div>
+            <div class="gcard-row"><span>ROE</span><span class="gval pos">147%</span></div>
+          </div>
+          <div class="gcard-periods">
+            <span class="period-tag active">FY2024</span>
+            <span class="period-tag">FY2023</span>
+            <span class="period-tag">FY2022</span>
+          </div>
+        </div>
+        <div class="graphic-card card-float-1">
+          <div class="float-icon">📊</div>
+          <div class="float-text">10 Financial Ratios<br><small>Computed automatically</small></div>
+        </div>
+        <div class="graphic-card card-float-2">
+          <div class="float-icon green">✓</div>
+          <div class="float-text">S&P 500 Coverage<br><small>97.9% accuracy</small></div>
+        </div>
+        <div class="graphic-card card-float-3">
+          <div class="float-icon">⬇</div>
+          <div class="float-text">CSV Export<br><small>All statements</small></div>
+        </div>
+      </div>
+    </div>
+    <!-- stats bar -->
+    <div class="hero-stats">
+      <div class="container stats-inner">
+        <div class="stat"><strong>503</strong><span>S&P 500 Companies</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><strong>10+</strong><span>Years of History</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><strong>Free</strong><span>No API Key Needed</span></div>
+        <div class="stat-div"></div>
+        <div class="stat"><strong>Live</strong><span>SEC EDGAR Data</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ──────────────────────────────────────────────────────────── -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Current Features</div>
+        <h2>Everything you need to<br>analyse any public company</h2>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card feature-large">
+          <div class="fc-icon">📋</div>
+          <h3>3 Core Financial Statements</h3>
+          <p>Income Statement, Balance Sheet, and Cash Flow Statement for any SEC-registered company — clean, labelled, and ready to use.</p>
+          <div class="fc-tags"><span>10-K Annual</span><span>10-Q Quarterly</span><span>5 Years</span></div>
+        </div>
+        <div class="feature-card">
+          <div class="fc-icon">📐</div>
+          <h3>10 Financial Ratios</h3>
+          <p>Gross Margin, Net Margin, ROE, ROA, Current Ratio, Quick Ratio, D/E, Interest Coverage, Asset Turnover and Operating Margin — auto-computed.</p>
+        </div>
+        <div class="feature-card">
+          <div class="fc-icon">⚡</div>
+          <h3>Instant Search</h3>
+          <p>Type any ticker and get results in seconds. Covers all U.S. exchange-listed companies with EDGAR filings.</p>
+        </div>
+        <div class="feature-card">
+          <div class="fc-icon">⬇</div>
+          <h3>CSV Export</h3>
+          <p>Download any statement as a clean CSV file — open directly in Excel or load into pandas with zero formatting issues.</p>
+        </div>
+        <div class="feature-card feature-large feature-right">
+          <div class="fc-icon">🏛</div>
+          <h3>SEC EDGAR — Free & Legal</h3>
+          <p>All data is sourced directly from the SEC's public XBRL API. No scraping, no terms-of-service violations, no rate limit surprises — the same authoritative source used by institutional investors.</p>
+          <div class="fc-tags"><span>XBRL Parsed</span><span>Auto-cleaned</span><span>USD Millions</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEARCH TOOL ────────────────────────────────────────────────────────── -->
+  <section class="search-section" id="search-section">
+    <div class="container">
+      <div class="section-header light">
+        <div class="section-tag green">Live Tool</div>
+        <h2>Search any U.S. company</h2>
+        <p>Pull financial statements directly from SEC EDGAR in real time</p>
+      </div>
+
+      <!-- Controls -->
+      <div class="tool-card">
+        <div class="tool-search-row">
+          <div class="tool-input-wrap">
+            <svg class="search-ico" width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M12 12L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input id="tickerInput" type="text" placeholder="Enter ticker symbol — AAPL, MSFT, SNDK..." maxlength="10" autocomplete="off" spellcheck="false">
+          </div>
+          <button id="loadBtn" onclick="loadTicker()">Load Data →</button>
+        </div>
+        <div class="tool-controls">
+          <div class="ctrl-group">
+            <span class="ctrl-label">Filing type</span>
+            <div class="pill-group">
+              <button class="pill-btn active" data-filing="10-K" onclick="setFiling(this)">10-K Annual</button>
+              <button class="pill-btn" data-filing="10-Q" onclick="setFiling(this)">10-Q Quarterly</button>
+            </div>
+          </div>
+          <div class="ctrl-group">
+            <span class="ctrl-label">Periods</span>
+            <div class="pill-group">
+              <button class="pill-btn" data-n="1" onclick="setPeriods(this)">1</button>
+              <button class="pill-btn" data-n="3" onclick="setPeriods(this)">3</button>
+              <button class="pill-btn active" data-n="5" onclick="setPeriods(this)">5</button>
+            </div>
+          </div>
+          <div class="quick-chips">
+            <span class="ctrl-label">Quick load:</span>
+            <span class="chip" onclick="quickLoad('AAPL')">AAPL</span>
+            <span class="chip" onclick="quickLoad('MSFT')">MSFT</span>
+            <span class="chip" onclick="quickLoad('NVDA')">NVDA</span>
+            <span class="chip" onclick="quickLoad('TSLA')">TSLA</span>
+            <span class="chip" onclick="quickLoad('SNDK')">SNDK</span>
+            <span class="chip" onclick="quickLoad('AMZN')">AMZN</span>
+            <span class="chip" onclick="quickLoad('JPM')">JPM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="status">
+        <div class="spinner" id="spinner"></div>
+        <span id="statusMsg"></span>
+      </div>
+
+      <!-- Company banner -->
+      <div id="companyBanner">
+        <div class="banner-left">
+          <div class="ticker-badge" id="bannerTicker"></div>
+          <div>
+            <div class="company-name" id="bannerName"></div>
+            <div class="company-sub" id="bannerSub"></div>
+          </div>
+        </div>
+        <div class="banner-right">
+          <div class="period-count" id="bannerPeriodsCount"></div>
+          <div class="period-label-sm">periods</div>
+          <div class="period-labels" id="bannerPeriodsLabels"></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div id="stmtTabs" style="display:none">
+        <button class="tab-btn active" data-tab="income"   onclick="switchTab(this)">Income Statement</button>
+        <button class="tab-btn"        data-tab="balance"  onclick="switchTab(this)">Balance Sheet</button>
+        <button class="tab-btn"        data-tab="cashflow" onclick="switchTab(this)">Cash Flow</button>
+        <button class="tab-btn"        data-tab="ratios"   onclick="switchTab(this)">Ratios</button>
+      </div>
+
+      <!-- Table panels -->
+      <div id="tableArea" style="display:none">
+        <div id="incomePanel"   class="stmt-panel active"></div>
+        <div id="balancePanel"  class="stmt-panel"></div>
+        <div id="cashflowPanel" class="stmt-panel"></div>
+        <div id="ratiosPanel"   class="stmt-panel"></div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState">
+        <div class="empty-graphic">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <circle cx="40" cy="40" r="38" stroke="#2ECC71" stroke-width="2" stroke-dasharray="6 4" opacity=".4"/>
+            <rect x="22" y="26" width="36" height="5" rx="2.5" fill="#2ECC71" opacity=".3"/>
+            <rect x="22" y="36" width="28" height="4" rx="2" fill="#2ECC71" opacity=".2"/>
+            <rect x="22" y="45" width="32" height="4" rx="2" fill="#2ECC71" opacity=".2"/>
+            <rect x="22" y="54" width="20" height="4" rx="2" fill="#2ECC71" opacity=".2"/>
+            <circle cx="55" cy="53" r="10" fill="#2ECC71" opacity=".15"/>
+            <path d="M51 53l3 3 6-6" stroke="#2ECC71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="empty-title">Ready to search</div>
+        <div class="empty-sub">Enter a U.S. stock ticker above to load live financial data from SEC EDGAR</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ───────────────────────────────────────────────────────── -->
+  <section class="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">How It Works</div>
+        <h2>From ticker to analysis<br>in under 5 seconds</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h4>Enter a ticker</h4>
+            <p>Type any U.S. exchange-listed stock symbol. We resolve it to the SEC's internal CIK identifier instantly.</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h4>We fetch from EDGAR</h4>
+            <p>Our server pulls XBRL-tagged financial data directly from SEC EDGAR's free API — no scraping, no intermediaries.</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h4>Clean & compute</h4>
+            <p>Raw XBRL tags are mapped to human-readable labels, scaled to USD millions, and ratios are computed automatically.</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h4>Analyse & export</h4>
+            <p>Browse the tables, switch between statements, and download any view as a clean CSV for Excel or Python.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── COMING SOON ────────────────────────────────────────────────────────── -->
+  <section class="coming-soon" id="coming-soon">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag orange">Roadmap</div>
+        <h2>Features coming soon</h2>
+        <p>We're building the most accessible financial data platform on the web. Here's what's next.</p>
+      </div>
+      <div class="roadmap-grid">
+
+        <div class="roadmap-card soon">
+          <div class="roadmap-badge phase1">Phase 1</div>
+          <div class="roadmap-icon">📊</div>
+          <h3>Historical Charts</h3>
+          <p>Interactive revenue, income and margin charts across all periods — see trends at a glance instead of reading rows of numbers.</p>
+          <div class="coming-tag">Coming Soon</div>
+        </div>
+
+        <div class="roadmap-card soon">
+          <div class="roadmap-badge phase1">Phase 1</div>
+          <div class="roadmap-icon">🔬</div>
+          <h3>Peer Comparison</h3>
+          <p>Load 2–5 companies side-by-side in a single table. Compare Apple vs Microsoft vs Google across every metric simultaneously.</p>
+          <div class="coming-tag">Coming Soon</div>
+        </div>
+
+        <div class="roadmap-card soon">
+          <div class="roadmap-badge phase2">Phase 2</div>
+          <div class="roadmap-icon">🤖</div>
+          <h3>AI Narrative Analysis</h3>
+          <p>After loading a company, get an instant plain-English summary of the financial results — margin trends, risks, and highlights.</p>
+          <div class="coming-tag">Coming Soon</div>
+        </div>
+
+        <div class="roadmap-card soon">
+          <div class="roadmap-badge phase2">Phase 2</div>
+          <div class="roadmap-icon">📁</div>
+          <h3>Excel Export</h3>
+          <p>Download a fully formatted Excel workbook with all four statements on separate sheets, ready for your financial models.</p>
+          <div class="coming-tag">Coming Soon</div>
+        </div>
+
+        <div class="roadmap-card soon">
+          <div class="roadmap-badge phase2">Phase 2</div>
+          <div class="roadmap-icon">🔔</div>
+          <h3>Watchlist & Alerts</h3>
+          <p>Save tickers to a watchlist and receive email alerts when a new 10-K or 10-Q is filed, or when a key ratio crosses a threshold.</p>
+          <div class="coming-tag">Coming Soon</div>
+        </div>
+
+        <div class="roadmap-card soon">
+          <div class="roadmap-badge phase3">Phase 3</div>
+          <div class="roadmap-icon">🔍</div>
+          <h3>Stock Screener</h3>
+          <p>Filter the entire S&P 500 by financial criteria — gross margin above 50%, D/E below 1, revenue growth above 20%, and more.</p>
+          <div class="coming-tag">Coming Soon</div>
+        </div>
+
+        <div class="roadmap-card soon">
+          <div class="roadmap-badge phase3">Phase 3</div>
+          <div class="roadmap-icon">⚙</div>
+          <h3>Developer API</h3>
+          <p>Access all financial data programmatically via a clean REST API with JSON responses. Build your own models and pipelines on top.</p>
+          <div class="coming-tag">Coming Soon</div>
+        </div>
+
+        <div class="roadmap-card soon">
+          <div class="roadmap-badge phase3">Phase 3</div>
+          <div class="roadmap-icon">📦</div>
+          <h3>S&P 500 Batch Export</h3>
+          <p>Download the full financial dataset for all 503 S&P 500 companies in a single Excel workbook or zipped CSV package.</p>
+          <div class="coming-tag">Coming Soon</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PRICING ────────────────────────────────────────────────────────────── -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Pricing</div>
+        <h2>Start free, upgrade when<br>you need more</h2>
+      </div>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="price-tier">Free</div>
+          <div class="price-amount">$0<span>/mo</span></div>
+          <div class="price-desc">Everything you need to get started</div>
+          <ul class="price-features">
+            <li>✓ Unlimited ticker searches</li>
+            <li>✓ Income, Balance Sheet, Cash Flow</li>
+            <li>✓ 10 Financial Ratios</li>
+            <li>✓ 3 years of history</li>
+            <li>✓ CSV export</li>
+            <li class="dim">✗ Peer comparison</li>
+            <li class="dim">✗ AI analysis</li>
+            <li class="dim">✗ Excel export</li>
+          </ul>
+          <button class="price-btn outline">Get Started</button>
+        </div>
+
+        <div class="price-card featured">
+          <div class="price-badge">Most Popular</div>
+          <div class="price-tier">Pro</div>
+          <div class="price-amount">$19<span>/mo</span></div>
+          <div class="price-desc">For investors and analysts</div>
+          <ul class="price-features">
+            <li>✓ Everything in Free</li>
+            <li>✓ 10 years of history</li>
+            <li>✓ Peer comparison (up to 5)</li>
+            <li>✓ AI narrative analysis</li>
+            <li>✓ Historical charts</li>
+            <li>✓ Excel export</li>
+            <li>✓ Watchlist & alerts (10 tickers)</li>
+            <li class="dim">✗ Stock screener</li>
+          </ul>
+          <button class="price-btn filled">Coming Soon</button>
+        </div>
+
+        <div class="price-card">
+          <div class="price-tier">Enterprise</div>
+          <div class="price-amount">$99<span>/mo</span></div>
+          <div class="price-desc">For funds and power users</div>
+          <ul class="price-features">
+            <li>✓ Everything in Pro</li>
+            <li>✓ Peer comparison (up to 20)</li>
+            <li>✓ Unlimited watchlist</li>
+            <li>✓ Stock screener</li>
+            <li>✓ Developer REST API</li>
+            <li>✓ S&P 500 batch export</li>
+            <li>✓ Priority support</li>
+            <li>✓ Annual discount (2 mo. free)</li>
+          </ul>
+          <button class="price-btn outline">Coming Soon</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="nav-logo">
+          <div class="nav-logo-icon">
+            <svg width="18" height="18" viewBox="0 0 22 22" fill="none">
+              <rect x="1" y="1" width="9" height="9" rx="2" fill="currentColor"/>
+              <rect x="12" y="1" width="9" height="9" rx="2" fill="currentColor" opacity=".5"/>
+              <rect x="1" y="12" width="9" height="9" rx="2" fill="currentColor" opacity=".5"/>
+              <rect x="12" y="12" width="9" height="9" rx="2" fill="currentColor"/>
+            </svg>
+          </div>
+          FinLens
+        </div>
+        <p>Free institutional-grade financial data<br>from SEC EDGAR for everyone.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Product</h5>
+          <a href="#features">Features</a>
+          <a href="#search-section">Search Tool</a>
+          <a href="#coming-soon">Roadmap</a>
+          <a href="#pricing">Pricing</a>
+        </div>
+        <div class="footer-col">
+          <h5>Data</h5>
+          <a href="#">SEC EDGAR</a>
+          <a href="#">XBRL API</a>
+          <a href="#">Coverage</a>
+          <a href="#">Accuracy</a>
+        </div>
+        <div class="footer-col">
+          <h5>Company</h5>
+          <a href="#">About</a>
+          <a href="#">Blog</a>
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <span>© 2026 FinLens. Data sourced from SEC EDGAR (public domain).</span>
+        <span>Not investment advice.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
