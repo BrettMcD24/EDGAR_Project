@@ -27,6 +27,7 @@
       <div class="nav-links">
         <a href="#features">Features</a>
         <a href="#search-section">Search</a>
+        <a href="#compare-section">Compare</a>
         <a href="#coming-soon">Roadmap</a>
         <!-- <a href="#pricing">Pricing</a> -->
       </div>
@@ -147,6 +148,13 @@
           <p>All data is sourced directly from the SEC's public XBRL API. No scraping, no terms-of-service violations, no rate limit surprises — the same authoritative source used by institutional investors.</p>
           <div class="fc-tags"><span>XBRL Parsed</span><span>Auto-cleaned</span><span>USD Millions</span></div>
         </div>
+        <div class="feature-card feature-large">
+          <div class="fc-icon">⚖️</div>
+          <h3>Side-by-Side Stock Comparison</h3>
+          <p>Compare 2 companies across all financial statements and ratios simultaneously — income statements, balance sheets, cash flows, and 10 computed ratios shown in a unified side-by-side view.</p>
+          <div class="fc-tags"><span>2 Stocks Live</span><span>All Statements</span><span>Ratio Comparison</span></div>
+          <a href="#compare-section" style="display:inline-block;margin-top:14px;font-size:13px;font-weight:700;color:var(--green-dark);text-decoration:none;">Try it now →</a>
+        </div>
       </div>
     </div>
   </section>
@@ -255,6 +263,133 @@
         <div class="empty-title">Ready to search</div>
         <div class="empty-sub">Enter a U.S. stock ticker above to load live financial data from SEC EDGAR</div>
       </div>
+    </div>
+  </section>
+
+  <!-- ── COMPARE TOOL ───────────────────────────────────────────────────────── -->
+  <section class="compare-section" id="compare-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag green">Live Tool</div>
+        <h2>Compare companies side by side</h2>
+        <p>Load 2 companies and see all statements and ratios in a unified view</p>
+      </div>
+
+      <!-- Compare controls -->
+      <div class="tool-card">
+        <div class="cmp-inputs-row">
+          <div class="cmp-slot">
+            <span class="ctrl-label">Company 1</span>
+            <div class="tool-input-wrap">
+              <svg class="search-ico" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M12 12L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <input id="cmpTicker1" type="text" placeholder="e.g. AAPL" maxlength="10" autocomplete="off" spellcheck="false" class="cmp-ticker-input">
+            </div>
+          </div>
+          <div class="cmp-vs">VS</div>
+          <div class="cmp-slot">
+            <span class="ctrl-label">Company 2</span>
+            <div class="tool-input-wrap">
+              <svg class="search-ico" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M12 12L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <input id="cmpTicker2" type="text" placeholder="e.g. MSFT" maxlength="10" autocomplete="off" spellcheck="false" class="cmp-ticker-input">
+            </div>
+          </div>
+          <!-- 3 & 4 stock slots — disabled until Pro tier -->
+          <div class="cmp-slot cmp-slot-locked" title="Coming soon — Pro tier">
+            <span class="ctrl-label">Company 3 <span class="coming-soon-pill">Pro</span></span>
+            <div class="tool-input-wrap">
+              <svg class="search-ico" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M12 12L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <input type="text" placeholder="Coming soon" disabled class="cmp-ticker-input">
+            </div>
+          </div>
+          <div class="cmp-slot cmp-slot-locked" title="Coming soon — Pro tier">
+            <span class="ctrl-label">Company 4 <span class="coming-soon-pill">Pro</span></span>
+            <div class="tool-input-wrap">
+              <svg class="search-ico" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M12 12L16 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <input type="text" placeholder="Coming soon" disabled class="cmp-ticker-input">
+            </div>
+          </div>
+        </div>
+
+        <div class="cmp-controls-row">
+          <div class="ctrl-group">
+            <span class="ctrl-label">Filing</span>
+            <div class="pill-group">
+              <button class="pill-btn active" data-cmp-filing="10-K" onclick="setCmpFiling(this)">10-K Annual</button>
+              <button class="pill-btn"        data-cmp-filing="10-Q" onclick="setCmpFiling(this)">10-Q Quarterly</button>
+            </div>
+          </div>
+          <div class="ctrl-group">
+            <span class="ctrl-label">Periods</span>
+            <div class="pill-group">
+              <button class="pill-btn"        data-cmp-n="1" onclick="setCmpPeriods(this)">1</button>
+              <button class="pill-btn active" data-cmp-n="3" onclick="setCmpPeriods(this)">3</button>
+              <button class="pill-btn"        data-cmp-n="5" onclick="setCmpPeriods(this)">5</button>
+            </div>
+          </div>
+          <button id="cmpBtn" onclick="loadComparison()">Compare →</button>
+        </div>
+
+        <div class="chip-row" style="margin-top:10px">
+          <span class="ctrl-label">Try:</span>
+          <span class="chip" onclick="cmpQuick('AAPL','MSFT')">AAPL vs MSFT</span>
+          <span class="chip" onclick="cmpQuick('NVDA','AMD')">NVDA vs AMD</span>
+          <span class="chip" onclick="cmpQuick('JPM','BAC')">JPM vs BAC</span>
+          <span class="chip" onclick="cmpQuick('TSLA','F')">TSLA vs F</span>
+          <span class="chip" onclick="cmpQuick('AMZN','GOOGL')">AMZN vs GOOGL</span>
+        </div>
+      </div>
+
+      <!-- Compare status -->
+      <div id="cmpStatus"></div>
+
+      <!-- Compare banners -->
+      <div id="cmpBanners" style="display:none" class="cmp-banners-row">
+        <div class="cmp-banner" id="cmpBanner1"></div>
+        <div class="cmp-banner" id="cmpBanner2"></div>
+      </div>
+
+      <!-- Compare tabs -->
+      <div id="cmpTabs" style="display:none">
+        <button class="tab-btn active" data-cmp-tab="income"   onclick="switchCmpTab(this)">Income Statement</button>
+        <button class="tab-btn"        data-cmp-tab="balance"  onclick="switchCmpTab(this)">Balance Sheet</button>
+        <button class="tab-btn"        data-cmp-tab="cashflow" onclick="switchCmpTab(this)">Cash Flow</button>
+        <button class="tab-btn"        data-cmp-tab="ratios"   onclick="switchCmpTab(this)">Ratios</button>
+      </div>
+
+      <!-- Compare panels -->
+      <div id="cmpArea" style="display:none">
+        <div id="cmpIncomePanel"   class="cmp-panel active"></div>
+        <div id="cmpBalancePanel"  class="cmp-panel"></div>
+        <div id="cmpCashflowPanel" class="cmp-panel"></div>
+        <div id="cmpRatiosPanel"   class="cmp-panel"></div>
+      </div>
+
+      <!-- Compare empty state -->
+      <div id="cmpEmpty">
+        <div class="empty-graphic">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <rect x="8" y="20" width="28" height="40" rx="4" stroke="#2ECC71" stroke-width="1.5" stroke-dasharray="4 3" opacity=".5"/>
+            <rect x="44" y="20" width="28" height="40" rx="4" stroke="#2ECC71" stroke-width="1.5" stroke-dasharray="4 3" opacity=".5"/>
+            <path d="M36 40h8" stroke="#2ECC71" stroke-width="2" stroke-linecap="round"/>
+            <path d="M38 37l-3 3 3 3M42 37l3 3-3 3" stroke="#2ECC71" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="empty-title">Enter two tickers to compare</div>
+        <div class="empty-sub">Both companies load simultaneously — statements and ratios side by side</div>
+      </div>
+
     </div>
   </section>
 

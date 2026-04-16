@@ -14,7 +14,6 @@ Then open: http://localhost:5000
 import json
 import logging
 import time
-import os
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -23,7 +22,7 @@ from flask import Flask, jsonify, render_template, request
 
 # ── Flask setup ───────────────────────────────────────────────────────────────
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
+app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -261,6 +260,10 @@ BALANCE_CONCEPTS = [
     "AccountsReceivableNetCurrent",
     "ReceivablesNetCurrent",                        # broader receivables (banks, insurance)
     "InventoryNet",
+    "InventoriesFinishedGoods",                      # apparel/footwear (NKE)
+    "RetailRelatedInventoryMerchandise",             # retail inventory
+    "InventoryFinishedGoods",                        # alt finished goods tag
+    "InventoryRawMaterialsAndSupplies",              # manufacturing raw materials
     "OtherAssetsCurrent",
     "AssetsCurrent",
     "AssetsOfDisposalGroupIncludingDiscontinuedOperationCurrent",  # spinoffs/discontinued
@@ -293,8 +296,10 @@ BALANCE_CONCEPTS = [
     # ── Equity ──────────────────────────────────────────────────────────────
     "AdditionalPaidInCapital",
     "RetainedEarningsAccumulatedDeficit",
-    "StockholdersEquity",
-    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "StockholdersEquity",                           # parent equity (most common)
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",  # total equity incl. NCI
+    "MinorityInterest",                             # noncontrolling interest — NEE, AMT, utilities
+    "RedeemableNoncontrollingInterestEquityCarryingAmount",  # redeemable NCI
     "PartnersCapital",                              # MLPs and partnerships
     "MembersEquity",                                # LLCs
 ]
@@ -406,7 +411,11 @@ LABELS = {
     "AccountsPayableAndAccruedLiabilitiesCurrentAndNoncurrent": "Total Current Liabilities",
     "ShortTermInvestments":         "Short-Term Investments",
     "AccountsReceivableNetCurrent": "Accounts Receivable, Net",
-    "InventoryNet":                 "Inventories, Net",
+    "InventoryNet":                                  "Inventories, Net",
+    "InventoriesFinishedGoods":                      "Inventories, Net",
+    "RetailRelatedInventoryMerchandise":             "Inventories, Net",
+    "InventoryFinishedGoods":                        "Inventories, Net",
+    "InventoryRawMaterialsAndSupplies":              "Inventories, Net",
     "OtherAssetsCurrent":           "Other Current Assets",
     "AssetsCurrent":                "Total Current Assets",
     "PropertyPlantAndEquipmentNet": "PP&E, Net",
@@ -428,6 +437,9 @@ LABELS = {
     "AdditionalPaidInCapital":      "Additional Paid-In Capital",
     "RetainedEarningsAccumulatedDeficit": "Retained Earnings (Deficit)",
     "StockholdersEquity":           "Total Stockholders' Equity",
+    "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "Total Equity",
+    "MinorityInterest":             "Noncontrolling Interest",
+    "RedeemableNoncontrollingInterestEquityCarryingAmount": "Redeemable Noncontrolling Interest",
     "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": "Total Stockholders' Equity",
     "PartnersCapital":              "Total Equity",
     "MembersEquity":                "Total Equity",
@@ -476,7 +488,9 @@ def extract_concept(gaap: dict, concept: str, filings: list[dict], form_type: st
         return None
 
     units   = cd.get("units", {})
-    records = units.get("USD") or units.get("shares") or units.get("pure") or []
+    # EPS concepts use "USD/shares" unit type in EDGAR (not "pure" or "USD")
+    records = (units.get("USD/shares") or units.get("USD") or
+               units.get("shares") or units.get("pure") or [])
     if not records:
         return None
 
@@ -636,7 +650,8 @@ def _derive_total_liabilities(bal_rows: list[dict]) -> dict | None:
     for companies that don't file Liabilities as a standalone tag.
     Uses fuzzy period matching so slight date differences don't break the subtraction.
     """
-    equity_labels = ("Total Stockholders' Equity", "Total Equity")
+    equity_labels = ("Total Stockholders' Equity", "Total Equity",
+                     "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest")
     total_eq = next((r["values"] for r in bal_rows
                      if r["label"] in equity_labels), None)
     total_both = next((r["values"] for r in bal_rows
@@ -670,6 +685,113 @@ def extract_statements(facts: dict, filings: list[dict], form_type: str) -> dict
         # ── Derived rows (computed when direct XBRL tag is absent) ───────────
 
         if stmt_name == "income_statement":
+            # ── Presentation suppression rules ────────────────────────────────
+            # When a parent/aggregate concept is present on the face of the
+            # income statement, suppress its sub-components to avoid double-
+            # counting and match the official 10-K presentation format.
+            #
+            # Structure: {parent_label: ([children_to_suppress], condition)}
+            # condition = None means always suppress; a string means only
+            # suppress when that additional label is also present (safety guard).
+            SUPPRESSION_RULES = [
+                # SG&A: Apple, Microsoft and most large-caps show one combined line.
+                # Sub-components appear in EDGAR from footnote disclosures.
+                {
+                    "parent":    "SG&A Expense",
+                    "suppress":  ["Sales & Marketing", "General & Administrative"],
+                    "condition": None,
+                },
+                # Interest Expense: Microsoft, Alphabet and many tech/growth companies
+                # bundle interest income, interest expense, and FX into a single
+                # "Other income (expense), net" line. Interest Expense exists in
+                # EDGAR as a note disclosure but not a face-of-statement line.
+                # Only suppress when Pre-Tax Income is present (confirms we have
+                # a complete statement using the aggregated presentation).
+                {
+                    "parent":    "Other Income (Expense), Net",
+                    "suppress":  ["Interest Expense"],
+                    "condition": "Pre-Tax Income (Loss)",
+                },
+                # Cost sub-components: some companies tag both the total Cost of
+                # Revenue and its sub-lines (Cost of Products, Cost of Services).
+                # Suppress sub-lines when the parent total is present.
+                {
+                    "parent":    "Cost of Revenue",
+                    "suppress":  ["Cost of Products", "Cost of Services",
+                                  "Cost of Goods Sold"],
+                    "condition": None,
+                },
+                # Revenue sub-components: some companies tag both total Revenue
+                # and product/service splits. Suppress splits when total present.
+                {
+                    "parent":    "Revenue",
+                    "suppress":  ["Product Revenue", "Service Revenue",
+                                  "Product Sales", "Service Revenue Net"],
+                    "condition": None,
+                },
+            ]
+
+            for rule in SUPPRESSION_RULES:
+                if rule["parent"] not in seen_labels:
+                    continue
+                if rule["condition"] and rule["condition"] not in seen_labels:
+                    continue
+                to_remove = set(rule["suppress"]) & seen_labels
+                if to_remove:
+                    rows = [r for r in rows if r["label"] not in to_remove]
+                    seen_labels -= to_remove
+                    logger.debug("Suppressed %s (parent: %s)", to_remove, rule["parent"])
+
+            # ── Arithmetic consistency check ──────────────────────────────────
+            # Verify key accounting identities hold. Log warnings when they
+            # don't — these flag double-counting or wrong-period matches.
+            def _check_identity(name, lhs_label, rhs_labels, rows_list, tolerance=0.03):
+                """Check lhs ≈ sum(rhs) for each period. Log if off by >tolerance."""
+                lhs = next((r["values"] for r in rows_list if r["label"] == lhs_label), None)
+                if not lhs:
+                    return
+                for period, lhs_val in lhs.items():
+                    if lhs_val is None:
+                        continue
+                    rhs_sum = sum(
+                        (next((r["values"].get(period) for r in rows_list
+                               if r["label"] == rhs_lbl), None) or 0)
+                        for rhs_lbl in rhs_labels
+                    )
+                    if rhs_sum == 0:
+                        continue
+                    diff = abs(lhs_val - rhs_sum) / max(abs(lhs_val), 1)
+                    if diff > tolerance:
+                        logger.warning(
+                            "Arithmetic check FAILED: %s %s=%.1f, computed=%.1f, Δ=%.1f%%",
+                            name, period, lhs_val, rhs_sum, diff * 100
+                        )
+
+            # Revenue - COGS should equal Gross Profit
+            _check_identity(
+                "Revenue-COGS=GP", "Gross Profit",
+                [],   # can't easily check subtraction here, skip
+                rows
+            )
+
+            # Gross Profit - Operating Expenses should ≈ Operating Income
+            # (only check when all three are present)
+            gp_vals   = next((r["values"] for r in rows if r["label"] == "Gross Profit"), None)
+            opex_vals = next((r["values"] for r in rows if r["label"] == "Total Operating Expenses"), None)
+            oi_vals   = next((r["values"] for r in rows if r["label"] == "Operating Income (Loss)"), None)
+            if gp_vals and opex_vals and oi_vals:
+                for period, gp_v in gp_vals.items():
+                    opex_v = opex_vals.get(period)
+                    oi_v   = oi_vals.get(period)
+                    if None not in (gp_v, opex_v, oi_v) and abs(oi_v) > 0:
+                        implied = gp_v - opex_v
+                        diff = abs(implied - oi_v) / max(abs(oi_v), 1)
+                        if diff > 0.03:
+                            logger.warning(
+                                "GP-OpEx≠OI for period %s: GP=%.1f OpEx=%.1f implied=%.1f actual=%.1f Δ=%.1f%%",
+                                period, gp_v, opex_v, implied, oi_v, diff * 100
+                            )
+
             # Gross Profit = Revenue - Cost of Revenue (when GrossProfit tag absent)
             if "Gross Profit" not in seen_labels:
                 rev  = next((r["values"] for r in rows if r["label"] == "Revenue"), None)
@@ -704,14 +826,101 @@ def extract_statements(facts: dict, filings: list[dict], form_type: str) -> dict
                         seen_labels.add("Operating Income (Loss)")
 
         elif stmt_name == "balance_sheet":
-            # Total Liabilities = Total L&E - Total Equity (when Liabilities tag absent)
+            # ── Enforce correct balance sheet row ordering ────────────────────
+            # Rows are assigned to numbered sections so that sorting produces
+            # the standard balance sheet layout regardless of XBRL filing order:
+            #   0  Current asset components (cash, receivables, inventory, other)
+            #   1  Total Current Assets  (always last in current assets)
+            #   2  Non-current assets
+            #   3  Total Assets
+            #   4  Current liability components
+            #   5  Total Current Liabilities (always last in current liabilities)
+            #   6  Non-current liabilities
+            #   7  Total Liabilities
+            #   8  Equity components
+            #   9  Total Stockholders' Equity
+            #  10  Total Liabilities & Equity  (always last)
+            #  99  Anything unrecognised
+
+            SECTION_MAP = {
+                "Cash & Equivalents":           0,
+                "Short-Term Investments":        0,
+                "Accounts Receivable, Net":      0,
+                "Inventories, Net":              0,
+                "Other Current Assets":          0,
+                "Assets Held for Sale":          0,
+                "Total Current Assets":          1,
+                "PP&E, Net":                     2,
+                "Real Estate Investment, Net":   2,
+                "Goodwill":                      2,
+                "Intangible Assets, Net":        2,
+                "Operating Lease ROU Assets":    2,
+                "Other Non-Current Assets":      2,
+                "Total Assets":                  3,
+                "Accounts Payable":              4,
+                "Accrued Liabilities":           4,
+                "Current Portion – LT Debt":     4,
+                "Total Current Liabilities":     5,
+                "Long-Term Debt":                6,
+                "Operating Lease Liability":     6,
+                "Deferred Tax Liabilities":      6,
+                "Other Non-Current Liabilities": 6,
+                "Total Liabilities":             7,
+                "Additional Paid-In Capital":    8,
+                "Retained Earnings (Deficit)":   8,
+                "Noncontrolling Interest":        8,
+                "Redeemable Noncontrolling Interest": 8,
+                "Total Stockholders' Equity":    9,
+                "Total Equity":                  9,
+                "Total Liabilities & Equity":   10,
+            }
+
+            rows.sort(key=lambda r: SECTION_MAP.get(r["label"], 99))
+
+            # ── Suppress double-counted Inventories row ───────────────────────
+            # Some companies (e.g. APA) file InventoryNet as an XBRL concept but
+            # it is actually a sub-component of "Other Current Assets" on the face
+            # of the balance sheet — not a separate line item. Showing both causes
+            # double-counting. Detect this by checking whether:
+            #   (Cash + Receivables + Inventory + Other) > Total Current Assets
+            # If the sum of components significantly exceeds TCA, inventory is
+            # embedded inside Other Current Assets and should be suppressed.
+            inv_row = next((r for r in rows if r["label"] == "Inventories, Net"), None)
+            tca_row = next((r for r in rows if r["label"] == "Total Current Assets"), None)
+            if inv_row and tca_row:
+                component_labels = {"Cash & Equivalents", "Short-Term Investments",
+                                    "Accounts Receivable, Net", "Inventories, Net",
+                                    "Other Current Assets"}
+                comp_rows = [r for r in rows if r["label"] in component_labels]
+                # Check the most recent period with data
+                for period_date, tca_val in tca_row["values"].items():
+                    if not tca_val:
+                        continue
+                    comp_sum = sum(
+                        r["values"].get(period_date) or 0
+                        for r in comp_rows
+                        if r["values"].get(period_date) is not None
+                    )
+                    # If components sum to more than 105% of TCA, inventory
+                    # is already included in Other Current Assets — suppress it
+                    if comp_sum > tca_val * 1.05:
+                        logger.warning(
+                            "Suppressing embedded Inventories: component sum %.0f "
+                            "exceeds TCA %.0f — inventory is inside Other Current Assets",
+                            comp_sum, tca_val
+                        )
+                        rows = [r for r in rows if r["label"] != "Inventories, Net"]
+                        seen_labels.discard("Inventories, Net")
+                        break
+            # Only derive if not present as a direct XBRL tag
             if "Total Liabilities" not in seen_labels:
                 derived = _derive_total_liabilities(rows)
                 if derived:
-                    # Insert just before equity section
                     rows.append({"label": "Total Liabilities",
                                  "values": derived, "_derived": True})
                     seen_labels.add("Total Liabilities")
+                    # Re-sort after adding derived row
+                    rows.sort(key=lambda r: SECTION_MAP.get(r["label"], 99))
 
         result[stmt_name] = rows
 
@@ -893,5 +1102,3 @@ if __name__ == "__main__":
     print("  Running at: http://localhost:5000")
     print("  Press Ctrl+C to stop\n")
     app.run(debug=True, port=5000)
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
